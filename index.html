@@ -318,10 +318,8 @@
 				drag.object.dmove(dx, dy);
 
 				if(drag.object.parent === bbox && !drag.rotate){
-					/*var cx = drag.start.cx-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.cos(bbox.selected.transform('rotation')/(180/Math.PI));
-					var cy = drag.start.cy-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.sin(bbox.selected.transform('rotation')/(180/Math.PI));
-					console.log(cx+','+cy)
-					bbox.selected.center(cx,cy);*/
+					var cx = drag.start.cx-(drag.start.x-drag.x-dx)/2;
+					var cy = drag.start.cy-(drag.start.y-drag.y-dy)/2;
 
 					dx = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.cos(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
 					dy = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.sin(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
@@ -339,6 +337,8 @@
 					}
 
 					
+
+					bbox.selected.center(cx,cy);
 
 					showbbox(bbox.selected);
 				}else if(drag.object.parent === bbox && drag.rotate){
