@@ -108,6 +108,7 @@
 			padding:10px;
 			font-size:14px;
 			pointer-events:none;
+			box-sizing:border-box;
 		}
 		#steptext > div{
 			display:inline-block;
@@ -117,6 +118,7 @@
 		.editable{
 			display:inline-block;
 			background-color:rgba(255,255,0,0.5);
+			padding:0px 5px;
 		}
 		.editable.x:before{content:'x:'}
 		.editable.y:before{content:'y:'}
@@ -132,12 +134,13 @@
 		select{
 			outline:none;
 			ont-family:"Courier New", Courier, monospace;
+			background-color:#f9f9f9;
 		}
 
 		.varname{
 			background-color:rgba(0,0,255,0.1);
 			border-radius:10px;
-			padding:0px 5px;
+			padding:0px 10px;
 			border:1px solid rgba(0,0,255,0.2) !important;
 			cursor:pointer;
 		}
@@ -280,13 +283,13 @@
 			}
 			
 			input.onkeydown = function(e){
-				input.style.width = fontsize*String(input.value).length/1.5+10;
+				input.style.width = fontsize*(String(input.value).length+2)/1.5;
 				if(e.keyCode === 13){
 					setvalue();
 				}
 			}
 			input.onkeyup = function(){
-				input.style.width = fontsize*String(input.value).length/1.5+10;
+				input.style.width = fontsize*(String(input.value).length+2)/1.5;
 			}
 			input.onblur = setvalue;
 			
@@ -294,7 +297,7 @@
 
 			var fontsize = Number(window.getComputedStyle(input)['font-size'].substr(0,window.getComputedStyle(input)['font-size'].length-2));
 
-			input.style.width = fontsize*String(input.value).length/1.5+10;
+			input.style.width = fontsize*(String(input.value).length+2)/1.5;
 			input.focus();
 		}
 
