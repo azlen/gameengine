@@ -1,7 +1,6 @@
 <html>
 <head>
 	<script src="svg.min.js"></script>
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 	<style>
 		html,body{
 			margin:0px;
@@ -9,13 +8,13 @@
 			width:100%;
 			height:100%;
 			display:flex;
-			font-family:"Open sans";
+			font-family:"Courier New", Courier, monospace;
 			cursor:rotate;
 		}
 		*{
-			-webkit-user-select:none;
-			
+			-webkit-user-select:none;	
 		}
+
 		#sidebar{
 			flex:0 0 1;
 			width:300px;
@@ -85,9 +84,9 @@
 			border-bottom:1px solid #000;
 			box-sizing:border-box;
 			padding:20px;
-			font-size:15px;
+			font-size:14px;
 		}
-		#behaviourframes{
+		#steps{
 			flex:2;
 			overflow-y:scroll;
 		}
@@ -99,7 +98,7 @@
 			background-color:#eee;
 		}
 
-		#behaviourframetext{
+		#steptext{
 			position:absolute;
 			top:0px;
 			left:0px;
@@ -110,17 +109,47 @@
 			font-size:14px;
 			pointer-events:none;
 		}
-		#behaviourframetext > div{
+		#steptext > div{
 			display:inline-block;
 			pointer-events:all;
+		}
+
+		.editable{
+			display:inline-block;
+			background-color:rgba(255,255,0,0.5);
+		}
+		.editable.x:before{content:'x:'}
+		.editable.y:before{content:'y:'}
+		.editable.deg:after{content:' degrees'}
+
+		input.varname,input.editable{
+			font-family:"Courier New", Courier, monospace;
+			font-size:14px;
+			outline:none;
+			border:none;
+			margin:0px;
+		}
+		select{
+			outline:none;
+			ont-family:"Courier New", Courier, monospace;
+		}
+
+		.varname{
+			background-color:rgba(0,0,255,0.1);
+			border-radius:10px;
+			padding:0px 5px;
+			border:1px solid rgba(0,0,255,0.2) !important;
+			cursor:pointer;
 		}
 	</style>
 </head>
 <body>
 	<div id="sidebar">
 		<div id="sidebarheader"></div>
-		<div id="variables">Variables go here</div>
-		<div id="behaviourframes">
+		<div id="variables">
+			<div class="variable"><span class="varname" onclick="edit(this)">variable</span>:<span class="varvalue editable" onclick="edit(this)">100</span></div>
+		</div>
+		<div id="steps">
 			<div class="frame"><div></div><p>Text goes here</p></div>
 			<!--<div class="frame"><div></div><p>Text goes here</p></div>
 			<div class="frame"><div></div><p>Text goes here</p></div>
@@ -134,7 +163,7 @@
 			<div class="behaviour"></div>
 		</div>
 		<div id="editor">
-			<div id="behaviourframetext"><div>Sample text</div></div>
+			<div id="steptext"><div>Sample text</div></div>
 			<svg id="svg"></svg>
 		</div>
 	</div>
@@ -146,7 +175,7 @@
 		var svg = document.querySelector('#svg');
 
 		//behaviour frame text
-		var bft = document.querySelector('#behaviourframetext > div');
+		var bft = document.querySelector('#steptext > div');
 
 		//drag variable
 		var drag = {
@@ -195,8 +224,6 @@
 		//draw draggable rectangle
 		var rect = draw.rect(100, 100).center(0,0).attr({ fill: '#f06' , cursor: 'move' }).rotate(0).draggable();
 
-		var circle = draw.circle(10,10).center(0,0).attr({ fill: '#000'})
-
 		//define the bbox used in dragging
 		var bbox = draw.group().hide();
 		bbox.add(draw.rect(100,100).center(0,0).attr({ stroke:'#000' , fill:'none' }))
@@ -238,6 +265,50 @@
 			return Math.atan2(point1y - point2y, point1x - point2x)
 		}
 
+		function edit(element){
+			console.log(element.parentNode);
+			console.log(element);
+			var input = document.createElement('input');
+			input.type = 'text';
+			input.value = element.innerText;
+			input.className = element.className;
+
+			function setvalue(){
+				element.innerText = input.value;
+				if(input.value === ''){element.innerText = '0'};
+				input.parentNode.replaceChild(element,input);
+			}
+			
+			input.onkeydown = function(e){
+				input.style.width = fontsize*String(input.value).length/1.5+10;
+				if(e.keyCode === 13){
+					setvalue();
+				}
+			}
+			input.onkeyup = function(){
+				input.style.width = fontsize*String(input.value).length/1.5+10;
+			}
+			input.onblur = setvalue;
+			
+			element.parentNode.replaceChild(input,element);
+
+			var fontsize = Number(window.getComputedStyle(input)['font-size'].substr(0,window.getComputedStyle(input)['font-size'].length-2));
+
+			input.style.width = fontsize*String(input.value).length/1.5+10;
+			input.focus();
+		}
+
+		//update step text
+		function updatetext(){
+			if(drag.rotate){
+				bft.innerHTML = 'Rotate rect <select><option>by</option><option>to</option></select> (<div class="editable deg" onclick="edit(this)">'+Math.round((bbox.selected.transform('rotation')-drag.start.rotation)*10)/10+'</div>)'
+			}else if(drag.object.parent === bbox){
+				bft.innerText = 'Scale rect by (x: , y: ) //NOT FINISHED YET';
+			}else{
+				bft.innerHTML = 'Move <select><option>by</option><option>to</option></select> (<div class="editable x" onclick="edit(this)">'+(drag.x-drag.start.x)+'</div>, <div class="editable y" onclick="edit(this)">'+(drag.y-drag.start.y)+'</div>)'
+			}
+		}
+
 		//dragging functions and other mouse events
 		draw.mousemove(function(e){
 			if(drag.object != undefined){ //if something is being dragged
@@ -247,11 +318,16 @@
 				drag.object.dmove(dx, dy);
 
 				if(drag.object.parent === bbox && !drag.rotate){
+					/*var cx = drag.start.cx-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.cos(bbox.selected.transform('rotation')/(180/Math.PI));
+					var cy = drag.start.cy-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.sin(bbox.selected.transform('rotation')/(180/Math.PI));
+					console.log(cx+','+cy)
+					bbox.selected.center(cx,cy);*/
+
 					dx = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.cos(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
 					dy = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.sin(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
 
-
-					var aa = [['x','y'],['width','y'],['width','height'],['x','height']][Number(drag.object.attr('class').match(/\d$/))]; // PLEASE RENAME THIS VARIABLE
+					//console.log(drag.object.attr('class').match(/bbox-handle-\d/)[0].match(/\d$/)[0]);
+					var aa = [['x','y'],['width','y'],['width','height'],['x','height']][Number(drag.object.attr('class').match(/bbox-handle-\d/)[0].match(/\d$/)[0])]; // PLEASE RENAME THIS VARIABLE
 
 					bbox.selected[aa[0]](bbox.selected.attr(aa[0])+dx);
 					bbox.selected[aa[1]](bbox.selected.attr(aa[1])+dy);
@@ -261,10 +337,8 @@
 					if(aa[1] != 'height'){
 						bbox.selected['height'](bbox.selected.attr('height')-dy)
 					}
-					var cx = drag.start.cx-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.cos(bbox.selected.transform('rotation')/(180/Math.PI));
-					var cy = drag.start.cy-distance(drag.start.cx,drag.start.cy,bbox.selected.cx(),bbox.selected.cy())*Math.sin(bbox.selected.transform('rotation')/(180/Math.PI));
-					console.log(cx+','+cy)
-					bbox.selected.center(cx,cy);
+
+					
 
 					showbbox(bbox.selected);
 				}else if(drag.object.parent === bbox && drag.rotate){
@@ -286,12 +360,15 @@
 				if(drag.object.parent != bbox){ //don't show bbox for bbox handles
 					showbbox(drag.object);
 				}
-				circle.cx(bbox.selected.cx())
-				circle.cy(bbox.selected.cy())
+
+				updatetext();
 			}
 		}).mouseup(function(e){
 			//how far have we dragged it?
+			bbox.hide();
+			
 			console.log('dragged by x:'+(drag.x-drag.start.x)+' y:'+(drag.y-drag.start.y));
+			bbox.show();
 
 			if(drag.object != undefined && bbox.selected != undefined){
 				for(var i = 0; i < 4; i++){
