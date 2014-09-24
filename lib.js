@@ -51,7 +51,7 @@ doppel.update = function(el){
 			//console.warn(e);
 		}
 
-		if(data.value != undefined){
+		if(data.value !== undefined){
 			for(var e in data.value){
 				var newNode = elements[i].doppel.cloneNode(true);
 				data.variable = new doppel(data.each[1],data.value[e],'never');
@@ -81,10 +81,10 @@ doppel.update = function(el){
 			//console.warn(e);
 		}
 
-		if(data.value != undefined){
+		if(data.value !== undefined){
 			if(data.value.nodeType > 0){
 				if(elements[i].children.length > 0){
-					if(elements[i].children[0] != data.value){
+					if(elements[i].children[0] !== data.value){
 						elements[i].replaceChild(data.value, elements[i].children[0]);
 					}
 				}else{
@@ -146,7 +146,7 @@ Object.defineProperty(Object.prototype, "onchange", {
 			               	},
 			               	set: function(val){
 			               		originalVal = val;
-			               		callback.call(this, property, val)
+			               		callback.call(this, property, val);
 			                   	return originalVal;
 			               	},
 			               	enumerable: true,
