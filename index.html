@@ -129,7 +129,6 @@
 			border:none;
 			margin:0px;
 		}
-
 		#variables{
 			flex:1;
 			padding:10px;
@@ -185,7 +184,6 @@
 			<div id="data"></div>
 		</div>
 	</div>
-
 	<script>
 		//editor element
 		var editor = document.querySelector('#editor');
@@ -216,12 +214,6 @@
 				prevobject:undefined,
 				dragging:false,
 			},
-			x:0, //current drag position x
-			y:0, //current drag position y
-			rotate:false, //whether or not the object is being rotated
-			object:undefined //object being dragged
-		}
-
 		var steptext = document.querySelector('#steptext');
 
 		var steps = new doppel('steps', [
@@ -404,5 +396,4 @@
 		window.addEventListener('mouseup',drag.mouseup);
 	</script>
 </body>
-
 </html>
