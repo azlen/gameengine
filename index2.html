@@ -1,0 +1,23 @@
+<html>
+<head>
+	<script src="lib.js"></script>
+</head>
+<body>
+
+	<h1 data-template="title"></h1>
+	<ul id="ul" data-each="note in notes">
+		<li data-template="note"></li>
+	</ul>
+	<input id="text"/>
+	<button onclick="addNote()">Add Note</button>
+	<script>
+		var title = new doppel('title','Notes');
+		var notes = new doppel('notes',[]);
+		function addNote(){
+			notes.value.push(document.querySelector('#text').value);
+			document.querySelector('#text').value = '';
+			doppel.update();
+		}
+	</script>
+</body>
+</html>

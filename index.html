@@ -1,0 +1,408 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+
+	<title>Game Engine</title>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+	<link href='http://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'>
+
+	<script src="svg.min.js"></script>
+	<script src="lib.js"></script>
+	
+	<style>
+		html, body{
+			margin:0px;
+			padding:0px;
+			width:100%;
+			height:100%;
+			font-family:Roboto, sans-serif;
+			cursor:default;
+			font-size:14px;
+			color:#333;
+		}
+		h1{margin:0px}
+		body{
+			display:flex;
+			flex-direction:column;
+		}
+		input, select, textarea{
+			outline:none;
+			font-size:14px;
+			font-family:Roboto;
+			color:#333;
+		}
+		select{
+			background-color:#F8FAFE;
+			border-color:#E5E8ED;
+			line-height:-2px;
+		}
+		#sidebar{
+			flex:0 0 1;
+			background-color:#ECEFF7;
+			width:300px;
+			border-top:1px solid #C5C8CD;
+			display:flex;
+			flex-direction:column;
+		}
+		#header{
+			flex:0 0 1;
+			background-color:#F8FAFE;
+			height:50px;
+			z-index:666;
+			display:flex;
+			align-items:center;
+			padding:20px;
+			box-sizing:border-box;
+		}
+		#header h1{
+			font-size:20px;
+		}
+		#container{
+			flex:1;
+			display:flex;
+		}
+		#editor{
+			flex:1;
+			background-color:#3A4854;
+			position:relative;
+			display:flex;
+		}
+		#container2{
+			flex:1;
+			display:flex;
+			flex-direction:column;
+			pointer-events:none;
+		}
+		#container2 *{
+			pointer-events:all;
+		}
+		#svg{
+			flex:1;
+			display:block;
+			background-color:#F8FAFE;
+			box-shadow:0px 0px 20px rgba(50,50,50,0.4);
+		}
+		#tools{
+			flex:0 0 1;
+			width:50px;
+		}
+		#data{
+			flex:0 0 1;
+			width:200px;
+		}
+		#steptext{
+			flex:0 0 1;
+			height:50px;
+			color:#fff;
+			display:flex;
+			align-items:center;
+			letter-spacing: 1px;
+			font-size:16px;
+		}
+		#steptext > div{
+			margin:auto;
+		}
+		#events{
+			flex:0 0 1;
+			height:75px;
+		}
+		.editable{
+			background-color:#91AA9D;
+			padding:1px 3px;
+			padding-bottom:3px;
+			cursor:text;
+			border-radius:3px;
+			margin:0px 5px;
+			display:inline-block;
+		}
+		.editable.x:before{content:'x: '}
+		.editable.y:before{content:'y: '}
+		.editable.x:after,.editable.y:after{content:'px'}
+		.editable.deg:after{content:' degrees'}
+
+		input.varname,input.editable{
+			font-size:14px;
+			outline:none;
+			border:none;
+			margin:0px;
+		}
+
+		#variables{
+			flex:1;
+			padding:10px;
+		}
+		#steps{
+			flex:1;
+			overflow-y:auto;
+			padding:10px;
+			position:relative
+		}
+		#steps h1, #variables h1{
+			position:fixed;
+			background-color:#ECEFF7;
+			width:100%;
+			margin-top:-10px;
+			padding:10px;
+		}
+		#steps ul{
+			list-style:none;
+			padding:0px;
+			margin-top:30px;
+		}
+		#steps ul li{
+			border-top:1px solid #C5C8CD;
+			padding:10px;
+		}
+	</style>
+</head>
+
+<body>
+	<header id="header">
+		<h1>Game Engine</h1>
+	</header>
+	<div id="container">
+		<aside id="sidebar">
+			<section id="variables">
+				<h1>Variables</h1>
+			</section>
+			<section id="steps">
+				<h1>Steps</h1>
+				<ul data-each="step in steps">
+					<li>step: <span data-template="step.text"></span></li>
+				</ul>
+			</section>
+		</aside>
+		<div id="editor">
+			<div id="tools"></div>
+			<div id="container2">
+				<div id="steptext" data-template="steptext.scale"></div>
+				<svg id="svg"></svg>
+				<div id="events"></div>
+			</div>
+			<div id="data"></div>
+		</div>
+	</div>
+
+	<script>
+		//editor element
+		var editor = document.querySelector('#editor');
+
+		//svg element
+		var svg = document.querySelector('#svg');
+
+		//resize svg and resize the viewbox
+		function updateViewBox(){
+			var w = svg.offsetWidth;
+			var h = svg.offsetHeight;
+			svg.setAttribute("viewBox","-"+w/2+" -"+h/2+" "+w+" "+h);
+		}
+		updateViewBox();
+
+		//drag variable
+		var drag = {
+			newstep:false,
+			start:{
+				x:0, //drag start x
+				y:0, //drag start y
+				rotation:0, //rotation of object if object is being rotated
+				cx:0, //cx of bbox.selected if object is being scaled
+				cy:0, //cy of bbox.selected if object is being scaled
+			},
+			variable:{ //ONLY FOR DRAGGING VARIABLES
+				object:undefined,
+				prevobject:undefined,
+				dragging:false,
+			},
+			x:0, //current drag position x
+			y:0, //current drag position y
+			rotate:false, //whether or not the object is being rotated
+			object:undefined //object being dragged
+		}
+
+		var steptext = document.querySelector('#steptext');
+
+		var steps = new doppel('steps', [
+			
+		])
+
+		var templates = {
+			steptext: new doppel('steptext', {
+				move: document.createElement('div'),
+				rotate: document.createElement('div'),
+				scale: document.createElement('div'),
+				variables:{
+					x: 0,
+					y: 0,
+					deg: 0,
+					select: document.createElement('select')
+				},
+			})
+		}
+		templates.steptext.value.variables.select.innerHTML = '<option>by</option><option>to</option>';
+		templates.steptext.value.move.innerHTML = 'Move rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
+		templates.steptext.value.rotate.innerHTML = 'Rotate rect <span data-template="steptext.variables.select"></span> (<span class="editable deg" data-template="steptext.variables.deg"></span>)';
+		templates.steptext.value.scale.innerHTML = 'Scale rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
+
+
+		doppel.update();
+
+		//extend svg.js
+		SVG.extend(SVG.Element, {
+			draggable: function(){
+				this.mousedown(function(e){
+					drag.object = this;
+					drag.x = e.x - editor.offsetLeft;
+					drag.y = e.y - editor.offsetTop;
+					drag.start.x = e.x - editor.offsetLeft;
+					drag.start.y = e.y - editor.offsetTop;
+					drag.rotate = false;
+					if(e.metaKey && this.parent === bbox){
+						drag.start.rotation = bbox.selected.transform('rotation');
+						drag.rotate = true;
+					}else if(this.parent === bbox){
+						drag.start.cx = bbox.selected.cx();
+						drag.start.cy = bbox.selected.cy();
+					}
+					drag.newstep = true;
+				}).click(function(e){
+					if(this.parent != bbox){ //don't show bbox for bbox handles
+						showbbox(this);
+					}
+				});
+				return this;
+			}
+		});
+
+		//distance function to find distance between two points
+		function distance(point1x,point1y,point2x,point2y){
+			return Math.sqrt((point2x-point1x)*(point2x-point1x)+(point2y-point1y)*(point2y-point1y))
+		}
+
+		//distance function to find direction between two points
+		function direction(point1x,point1y,point2x,point2y){
+			return Math.atan2(point1y - point2y, point1x - point2x)
+		}
+
+		var draw = SVG('svg').fixSubPixelOffset();
+
+		var rect = draw.rect(100,100).center(0,0).attr({ fill:'#f06', cursor:'move' }).draggable();
+
+		//define the bbox used in dragging
+		var bbox = draw.group().hide();
+		bbox.add(draw.rect(0,0).center(0,0).attr({ stroke:'#000' , fill:'none' }));
+		bbox.children()[0].node.style.pointerEvents = 'none';
+		for(var i = 0; i < 4; i++){
+			bbox.add(draw.rect(10,10).center(0,0).attr({ stroke:'#000' , fill:'#fff' , class:'bbox-handle-'+i+' bbox-handle' ,cursor: ['nwse','nesw','nwse','nesw'][i]+'-resize' }).draggable())
+		}
+
+		//function to show bounding box
+		function showbbox(object){
+			var rotation = object.transform('rotation');
+			object.rotate(0);
+			var bounds = object.bbox();
+			
+			bbox.selected = object;
+			bbox.show();
+			bbox.children()[0].attr({ x:bounds.x, y:bounds.y, width:bounds.width, height:bounds.height })
+			for(var i = 0; i < 4; i++){
+				bbox.children()[i+1].center( [bounds.x,bounds.x2,bounds.x2,bounds.x][i], [bounds.y,bounds.y,bounds.y2,bounds.y2][i] );
+
+				var cursor = ['ew','nwse','ns','nesw','ew','nwse','ns','nesw'][Math.floor(((direction(bbox.children()[i+1].rbox().cx,bbox.children()[i+1].rbox().cy,bbox.selected.rbox().cx,bbox.selected.rbox().cy)*(180/Math.PI)+45/2)+180)/45)]+'-resize';
+					bbox.children()[i+1].attr({ cursor: cursor});
+			}
+			object.rotate(rotation);
+			bbox.rotate(object.transform('rotation'))
+		}
+
+		drag.mousemove = function(e){
+			if(drag.object != undefined){ //if something is being dragged
+				//move the object by the amount that you have moved your mouse
+				var dx = e.x - editor.offsetLeft - drag.x;
+				var dy = e.y - editor.offsetTop - drag.y;
+				drag.object.dmove(dx, dy);
+
+				var transform = undefined;
+
+				//set transform variable
+				if(drag.object.parent === bbox && !drag.rotate){
+					transform = 'scale';
+				}else if(drag.object.parent === bbox && drag.rotate){
+					transform = 'rotate'
+				}else{
+					transform = 'move';
+				}
+
+				if(drag.newstep){
+					steptext.setAttribute('data-template', 'steptext.'+transform);
+					doppel.update();
+
+					console.log(templates.steptext.value.variables.select);
+					drag.newstep = false;
+				}
+
+				//do the transform
+				if(transform === 'scale'){
+					var cx = drag.start.cx-(drag.start.x-drag.x-dx)/2;
+					var cy = drag.start.cy-(drag.start.y-drag.y-dy)/2;
+
+					dx = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.cos(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
+					dy = distance(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)*Math.sin(direction(e.x - editor.offsetLeft, e.y - editor.offsetTop, drag.x, drag.y)-bbox.selected.transform('rotation')/(180/Math.PI));
+
+					//console.log(drag.object.attr('class').match(/bbox-handle-\d/)[0].match(/\d$/)[0]);
+					var aa = [['x','y'],['width','y'],['width','height'],['x','height']][Number(drag.object.attr('class').match(/bbox-handle-\d/)[0].match(/\d$/)[0])]; // PLEASE RENAME THIS VARIABLE
+
+					bbox.selected[aa[0]](bbox.selected.attr(aa[0])+dx);
+					bbox.selected[aa[1]](bbox.selected.attr(aa[1])+dy);
+					if(aa[0] != 'width'){
+						bbox.selected['width'](bbox.selected.attr('width')-dx)
+					}
+					if(aa[1] != 'height'){
+						bbox.selected['height'](bbox.selected.attr('height')-dy)
+					}
+
+					bbox.selected.center(cx,cy);
+
+					showbbox(bbox.selected);
+				}else if(transform === 'rotate'){
+					var rotation = direction(bbox.selected.rbox().cx,bbox.selected.rbox().cy,drag.x,drag.y);
+					rotation -= Math.atan2(bbox.selected.rbox().cy-drag.start.y , bbox.selected.rbox().cx-drag.start.x);
+					//console.log(rotation);
+					rotation = rotation*(180/Math.PI);
+					bbox.selected.rotate(drag.start.rotation+rotation);
+
+					showbbox(bbox.selected);
+				}
+
+
+				//set the drag x and y to current mouse position for next mousemove function
+				drag.x = e.x - editor.offsetLeft;
+				drag.y = e.y - editor.offsetTop;
+
+				//show bounding box and resize it properly
+				if(drag.object.parent != bbox){ //don't show bbox for bbox handles
+					showbbox(drag.object);
+				}
+			}
+		}
+		drag.mouseup = function(e){
+			newstep = false;
+			//nothing is being dragged anymore
+			if(drag.object != undefined){
+				drag.object = undefined;
+			}else if(e.target === svg){
+				bbox.selected = undefined;
+				bbox.hide();
+			};
+		}
+
+		window.addEventListener('resize',updateViewBox);
+
+		window.addEventListener('mousemove',drag.mousemove);
+		window.addEventListener('mouseup',drag.mouseup);
+	</script>
+</body>
+
+</html>
