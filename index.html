@@ -11,7 +11,39 @@
 
 	<script src="svg.min.js"></script>
 	<script src="lib.js"></script>
-	
+
+	<script type="text/template" id="steptext-select">
+		<select>
+			<option>by</option>
+			<option>to</option>
+		</select>
+	</script>
+
+	<script type="text/template" id="steptext-select">
+	 'Move rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)'
+	</script>
+
+
+	<script type="text/template" id="steptext-move">
+		Move rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable x" data-template="steptext.variables.x"></span>, 
+		<span class="editable y" data-template="steptext.variables.y"></span>)
+	</script>
+
+	<script type="text/template" id="steptext-rotate">
+		Rotate rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable deg" data-template="steptext.variables.deg"></span>)
+	</script>
+
+	<script type="text/template" id="steptext-scale">
+		Scale rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable x" data-template="steptext.variables.x"></span>, 
+		<span class="editable y" data-template="steptext.variables.y"></span>)
+	</script>
+
 	<style>
 		html, body{
 			margin:0px;
@@ -202,6 +234,12 @@
 		}
 		updateViewBox();
 
+		function getTemplate(id){
+			var div = document.createElement('div');
+			div.innerHTML = document.querySelector('#' + id).textContent;
+			return div; // could also return div.firstChild or a DocumentFragment
+		}
+
 		//drag variable
 		var drag = {
 			newstep:false,
@@ -230,21 +268,17 @@
 
 		var templates = {
 			steptext: new doppel('steptext', {
-				move: document.createElement('div'),
-				rotate: document.createElement('div'),
-				scale: document.createElement('div'),
+				move: getTemplate('steptext-move'),
+				rotate: getTemplate('steptext-rotate'),
+				scale: getTemplate('steptext-scale'),
 				variables:{
 					x: 0,
 					y: 0,
 					deg: 0,
-					select: document.createElement('select')
+					select: getTemplate('steptext-select')
 				},
 			})
 		}
-		templates.steptext.value.variables.select.innerHTML = '<option>by</option><option>to</option>';
-		templates.steptext.value.move.innerHTML = 'Move rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
-		templates.steptext.value.rotate.innerHTML = 'Rotate rect <span data-template="steptext.variables.select"></span> (<span class="editable deg" data-template="steptext.variables.deg"></span>)';
-		templates.steptext.value.scale.innerHTML = 'Scale rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
 
 		doppel.update();
 
