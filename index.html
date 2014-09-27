@@ -11,7 +11,39 @@
 
 	<script src="svg.min.js"></script>
 	<script src="lib.js"></script>
-	
+
+	<script type="text/template" id="steptext-select">
+		<select>
+			<option>by</option>
+			<option>to</option>
+		</select>
+	</script>
+
+	<script type="text/template" id="steptext-select">
+	 'Move rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)'
+	</script>
+
+
+	<script type="text/template" id="steptext-move">
+		Move rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable x" data-template="steptext.variables.x"></span>, 
+		<span class="editable y" data-template="steptext.variables.y"></span>)
+	</script>
+
+	<script type="text/template" id="steptext-rotate">
+		Rotate rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable deg" data-template="steptext.variables.deg"></span>)
+	</script>
+
+	<script type="text/template" id="steptext-scale">
+		Scale rect 
+		<span data-template="steptext.variables.select"></span> 
+		(<span class="editable x" data-template="steptext.variables.x"></span>, 
+		<span class="editable y" data-template="steptext.variables.y"></span>)
+	</script>
+
 	<style>
 		html, body{
 			margin:0px;
@@ -75,6 +107,7 @@
 			display:flex;
 			flex-direction:column;
 			pointer-events:none;
+			position: relative;
 		}
 		#container2 *{
 			pointer-events:all;
@@ -190,14 +223,22 @@
 
 		//svg element
 		var svg = document.querySelector('#svg');
+		var parent = svg.parentElement;
 
 		//resize svg and resize the viewbox
 		function updateViewBox(){
-			var w = svg.offsetWidth;
-			var h = svg.offsetHeight;
+			var parent = svg.parentElement;
+			var w = parent.offsetWidth;
+			var h = parent.offsetHeight;
 			svg.setAttribute("viewBox","-"+w/2+" -"+h/2+" "+w+" "+h);
 		}
 		updateViewBox();
+
+		function getTemplate(id){
+			var div = document.createElement('div');
+			div.innerHTML = document.querySelector('#' + id).textContent;
+			return div; // could also return div.firstChild or a DocumentFragment
+		}
 
 		//drag variable
 		var drag = {
@@ -227,22 +268,17 @@
 
 		var templates = {
 			steptext: new doppel('steptext', {
-				move: document.createElement('div'),
-				rotate: document.createElement('div'),
-				scale: document.createElement('div'),
+				move: getTemplate('steptext-move'),
+				rotate: getTemplate('steptext-rotate'),
+				scale: getTemplate('steptext-scale'),
 				variables:{
 					x: 0,
 					y: 0,
 					deg: 0,
-					select: document.createElement('select')
+					select: getTemplate('steptext-select')
 				},
 			})
 		}
-		templates.steptext.value.variables.select.innerHTML = '<option>by</option><option>to</option>';
-		templates.steptext.value.move.innerHTML = 'Move rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
-		templates.steptext.value.rotate.innerHTML = 'Rotate rect <span data-template="steptext.variables.select"></span> (<span class="editable deg" data-template="steptext.variables.deg"></span>)';
-		templates.steptext.value.scale.innerHTML = 'Scale rect <span data-template="steptext.variables.select"></span> (<span class="editable x" data-template="steptext.variables.x"></span>, <span class="editable y" data-template="steptext.variables.y"></span>)';
-
 
 		doppel.update();
 
@@ -265,7 +301,7 @@
 					}
 					drag.newstep = true;
 				}).click(function(e){
-					if(this.parent != bbox){ //don't show bbox for bbox handles
+					if(this.parent !== bbox){ //don't show bbox for bbox handles
 						showbbox(this);
 					}
 				});
@@ -315,7 +351,7 @@
 		}
 
 		drag.mousemove = function(e){
-			if(drag.object != undefined){ //if something is being dragged
+			if(drag.object !== undefined){ //if something is being dragged
 				//move the object by the amount that you have moved your mouse
 				var dx = e.x - editor.offsetLeft - drag.x;
 				var dy = e.y - editor.offsetTop - drag.y;
@@ -353,10 +389,10 @@
 
 					bbox.selected[aa[0]](bbox.selected.attr(aa[0])+dx);
 					bbox.selected[aa[1]](bbox.selected.attr(aa[1])+dy);
-					if(aa[0] != 'width'){
+					if(aa[0] !== 'width'){
 						bbox.selected['width'](bbox.selected.attr('width')-dx)
 					}
-					if(aa[1] != 'height'){
+					if(aa[1] !== 'height'){
 						bbox.selected['height'](bbox.selected.attr('height')-dy)
 					}
 
@@ -379,7 +415,7 @@
 				drag.y = e.y - editor.offsetTop;
 
 				//show bounding box and resize it properly
-				if(drag.object.parent != bbox){ //don't show bbox for bbox handles
+				if(drag.object.parent !== bbox){ //don't show bbox for bbox handles
 					showbbox(drag.object);
 				}
 			}
@@ -387,7 +423,7 @@
 		drag.mouseup = function(e){
 			newstep = false;
 			//nothing is being dragged anymore
-			if(drag.object != undefined){
+			if(drag.object !== undefined){
 				drag.object = undefined;
 			}else if(e.target === svg){
 				bbox.selected = undefined;
